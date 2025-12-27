@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Master</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .dark-mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .dark-mode-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 20px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1em;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .upload-section {
+            padding: 40px;
+        }
+
+        .upload-area {
+            border: 3px dashed #d0d0d0;
+            border-radius: 12px;
+            padding: 50px 20px;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            text-align: center;
+        }
+
+        body.dark-mode .upload-area {
+            background: #333;
+            border-color: #555;
+        }
+
+        .upload-area:hover {
+            border-color: #999;
+            background: #f5f5f5;
+        }
+
+        body.dark-mode .upload-area:hover {
+            background: #3a3a3a;
+            border-color: #666;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #1a1a1a;
+            color: white;
+        }
+
+        body.dark-mode .btn-primary {
+            background: #4a9eff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+
+        body.dark-mode .btn-primary:hover {
+            background: #3a8eef;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            margin-left: 10px;
+        }
+
+        body.dark-mode .btn-secondary {
+            background: #444;
+            color: #e0e0e0;
+            border: 1px solid #555;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        body.dark-mode .btn-secondary:hover {
+            background: #555;
+        }
+
+        .json-input-area {
+            margin-top: 30px;
+        }
+
+        .json-input-area h3 {
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.1em;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .json-input-area h3 {
+            color: #e0e0e0;
+        }
+
+        .json-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            resize: vertical;
+            transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.dark-mode .json-textarea {
+            background: #333;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+
+        .json-textarea:focus {
+            outline: none;
+            border-color: #1a1a1a;
+        }
+
+        body.dark-mode .json-textarea:focus {
+            border-color: #4a9eff;
+        }
+
+        .json-actions {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .quiz-section {
+            display: none;
+            background: #f5f5f5;
+        }
+
+        .quiz-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .progress-indicator {
+            text-align: center;
+            color: #666;
+            font-size: 0.95em;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e8e8e8;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #1a1a1a;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 16px;
+            padding: 50px 40px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInReverse {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .question-text {
+            font-size: 1.4em;
+            color: #1a1a1a;
+            margin-bottom: 40px;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .option {
+            padding: 20px 24px;
+            border: 2px solid #e8e8e8;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+            font-size: 1.05em;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .option-label {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9em;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .option:hover {
+            border-color: #ccc;
+            background: #fafafa;
+        }
+
+        .option.selected {
+            border-color: #1a1a1a;
+            background: #f8f8f8;
+        }
+
+        .option.selected .option-label {
+            background: #1a1a1a;
+            color: white;
+        }
+
+        .score-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.95em;
+            font-weight: 600;
+        }
+
+        .score-correct {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .score-incorrect {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid #e0e0e0;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            transition: all 0.2s ease;
+            color: #666;
+        }
+
+        body.dark-mode .nav-btn {
+            background: #2a2a2a;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+
+        .nav-btn:hover:not(:disabled) {
+            border-color: #1a1a1a;
+            background: #1a1a1a;
+            color: white;
+        }
+
+        body.dark-mode .nav-btn:hover:not(:disabled) {
+            border-color: #4a9eff;
+            background: #4a9eff;
+            color: white;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            display: none;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 4em;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin: 30px 0;
+        }
+
+        .score-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .score-item {
+            padding: 25px;
+            border-radius: 12px;
+            background: #f8f8f8;
+            transition: background-color 0.3s ease;
+        }
+
+        body.dark-mode .score-item {
+            background: #333;
+        }
+
+        .score-item h3 {
+            color: #666;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .score-item h3 {
+            color: #999;
+        }
+
+        .score-item p {
+            font-size: 2em;
+            font-weight: bold;
+            color: #1a1a1a;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .score-item p {
+            color: #e0e0e0;
+        }
+
+        .recent-quizzes {
+            margin-top: 30px;
+        }
+
+        .recent-quizzes h2 {
+            color: #1a1a1a;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .recent-quizzes h2 {
+            color: #e0e0e0;
+        }
+
+        .quiz-history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            border-radius: 12px;
+            background: #f8f8f8;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+
+        body.dark-mode .quiz-history-item {
+            background: #333;
+        }
+
+        .quiz-history-item:hover {
+            background: #f0f0f0;
+        }
+
+        body.dark-mode .quiz-history-item:hover {
+            background: #3a3a3a;
+        }
+
+        .quiz-history-title {
+            font-weight: 600;
+            color: #1a1a1a;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .quiz-history-title {
+            color: #e0e0e0;
+        }
+
+        .quiz-history-score {
+            font-weight: 600;
+            color: #666;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .quiz-history-score {
+            color: #999;
+        }
+
+        .quiz-history-date {
+            font-size: 0.9em;
+            color: #999;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .quiz-history-date {
+            color: #777;
+        }
+
+        .review-section {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .review-section h2 {
+            color: #1a1a1a;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .review-section h2 {
+            color: #e0e0e0;
+        }
+
+        .review-item {
+            background: #fff;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff5252;
+            transition: background-color 0.3s ease;
+        }
+
+        body.dark-mode .review-item {
+            background: #2a2a2a;
+        }
+
+        .review-item.correct {
+            border-left-color: #4caf50;
+        }
+
+        .review-question {
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+            font-size: 1.05em;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .review-question {
+            color: #e0e0e0;
+        }
+
+        .review-answer {
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.95em;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .review-answer.user {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        body.dark-mode .review-answer.user {
+            background: #4a1a1a;
+            color: #ff6b6b;
+        }
+
+        .review-answer.correct-ans {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        body.dark-mode .review-answer.correct-ans {
+            background: #1a3a1a;
+            color: #66bb6a;
+        }
+
+        .topic-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border-radius: 12px;
+            font-size: 0.85em;
+            margin-top: 8px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.dark-mode .topic-tag {
+            background: #1a2a3a;
+            color: #64b5f6;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px 15px;
+                margin-bottom: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .upload-section {
+                padding: 20px;
+            }
+
+            .upload-area {
+                padding: 30px 15px;
+            }
+
+            .question-card {
+                padding: 25px 20px;
+            }
+
+            .score-details {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .question-text {
+                font-size: 1.1em;
+                margin-bottom: 30px;
+            }
+
+            .option {
+                padding: 15px 18px;
+                font-size: 0.95em;
+            }
+
+            .option-label {
+                width: 28px;
+                height: 28px;
+                font-size: 0.85em;
+            }
+
+            .nav-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 1.1em;
+            }
+
+            .score-display {
+                font-size: 3em;
+            }
+
+            .score-item p {
+                font-size: 1.5em;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.9em;
+            }
+
+            .results-section {
+                padding: 25px 20px;
+            }
+
+            .review-item {
+                padding: 20px;
+            }
+
+            .quiz-history-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.3em;
+            }
+
+            .header p {
+                font-size: 0.9em;
+            }
+
+            .question-text {
+                font-size: 1em;
+            }
+
+            .option {
+                padding: 12px 15px;
+                font-size: 0.9em;
+            }
+
+            .score-display {
+                font-size: 2.5em;
+            }
+
+            .nav-buttons {
+                gap: 15px;
+            }
+
+            .btn-secondary {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+
+            .json-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .json-actions .btn {
+                margin: 0;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="dark-mode-toggle" id="darkModeToggle" title="Toggle Dark Mode">🌙</button>
+    
+    <div class="container">
+        <div class="header">
+            <h1>📚 Quiz Master</h1>
+            <p>Upload your JSON quiz file or paste JSON text to start</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div id="uploadSection" class="card upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <h2 style="margin-bottom: 10px; color: #333;">Drop your JSON file here</h2>
+                <p style="margin: 15px 0; color: #666;">or</p>
+                <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                    Browse Files
+                </button>
+                <input type="file" id="fileInput" accept=".json,application/json,text/plain" />
+                <p style="margin-top: 20px; color: #999; font-size: 0.9em;">
+                    Accepted format: JSON with questions, options, and correct_answer
+                </p>
+            </div>
+
+            <div class="json-input-area">
+                <h3>Or paste your JSON text here:</h3>
+                <textarea 
+                    id="jsonTextarea" 
+                    class="json-textarea" 
+                    placeholder='Paste your JSON here'></textarea>
+                <div class="json-actions">
+                    <button class="btn btn-primary" id="loadTextBtn">
+                        Load Quiz from Text
+                    </button>
+                    <button class="btn btn-secondary" id="clearTextBtn">
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Section -->
+        <div id="quizSection" class="quiz-section">
+            <div class="quiz-container">
+                <div class="progress-indicator">
+                    Question <span id="currentQuestion">1</span> of <span id="totalQuestions">10</span>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+
+                <div class="question-card" id="questionCard">
+                    <div class="question-text" id="questionText"></div>
+                    <div class="options" id="optionsContainer"></div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button class="nav-btn" id="prevBtn">←</button>
+                    <button class="nav-btn" id="nextBtn">→</button>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-secondary" id="exitQuizBtn" style="margin: 0;" onclick="if(confirm('Are you sure you want to exit? Your progress will not be saved.')) { App.loadNewQuiz(); }">
+                        ✕ Exit Quiz
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="card results-section">
+            <h1>🎉 Quiz Complete!</h1>
+            <div class="score-display" id="scoreDisplay">0%</div>
+            
+            <div class="score-details">
+                <div class="score-item">
+                    <h3>Correct</h3>
+                    <p id="finalCorrectCount">0</p>
+                </div>
+                <div class="score-item">
+                    <h3>Incorrect</h3>
+                    <p id="finalIncorrectCount">0</p>
+                </div>
+                <div class="score-item">
+                    <h3>Total</h3>
+                    <p id="totalCount">0</p>
+                </div>
+            </div>
+
+            <div id="topicsSummary" style="margin: 30px 0; text-align: left;"></div>
+
+            <div class="review-section" id="reviewSection"></div>
+
+            <div style="margin-top: 30px;">
+                <button class="btn btn-primary" id="restartBtn">🔄 Try Again</button>
+                <button class="btn btn-secondary" id="newQuizBtn">📁 Load New Quiz</button>
+                <button class="btn btn-secondary" id="clearHistoryBtn">🗑️ Clear History</button>
+            </div>
+        </div>
+
+        <!-- Recent Quizzes -->
+        <div class="card recent-quizzes" id="recentQuizzesSection" style="display: none; padding: 40px;">
+            <h2>📊 Recent Quizzes</h2>
+            <div id="quizHistoryContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const App = {
+            quizData: null,
+            currentQuestionIndex: 0,
+            userAnswers: [],
+            quizHistory: [],
+            currentQuizId: null,
+            navigationDirection: 'forward',
+            optionLabels: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
+            STORAGE_KEY: 'quiz_history',
+
+            async saveQuizFile(quizData) {
+                try {
+                    const quizId = 'quiz_' + Date.now();
+                    await window.storage.set(quizId, JSON.stringify(quizData));
+                    console.log('Quiz saved:', quizId);
+                    return quizId;
+                } catch (error) {
+                    console.error('Error saving quiz:', error);
+                    return null;
+                }
+            },
+
+            async loadQuizFile(quizId) {
+                try {
+                    const result = await window.storage.get(quizId);
+                    if (result && result.value) {
+                        return JSON.parse(result.value);
+                    }
+                    return null;
+                } catch (error) {
+                    console.error('Error loading quiz:', error);
+                    return null;
+                }
+            },
+
+            async loadQuizHistory() {
+                try {
+                    const result = await window.storage.get(this.STORAGE_KEY);
+                    if (result && result.value) {
+                        this.quizHistory = JSON.parse(result.value);
+                    } else {
+                        this.quizHistory = [];
+                    }
+                } catch (error) {
+                    this.quizHistory = [];
+                }
+                this.displayQuizHistory();
+            },
+
+            async saveQuizHistory() {
+                try {
+                    await window.storage.set(this.STORAGE_KEY, JSON.stringify(this.quizHistory));
+                } catch (error) {
+                    console.error('Error saving history:', error);
+                }
+            },
+
+            async saveQuizResult(title, score, total, quizId) {
+                const result = {
+                    title,
+                    score,
+                    total,
+                    date: new Date().toLocaleDateString(),
+                    time: new Date().toLocaleTimeString(),
+                    percentage: Math.round((score / total) * 100),
+                    timestamp: Date.now(),
+                    quizId
+                };
+                
+                this.quizHistory.unshift(result);
+                if (this.quizHistory.length > 10) this.quizHistory.pop();
+                
+                await this.saveQuizHistory();
+                this.displayQuizHistory();
+            },
+
+            displayQuizHistory() {
+                const container = document.getElementById('quizHistoryContainer');
+                const section = document.getElementById('recentQuizzesSection');
+                
+                if (this.quizHistory.length === 0) {
+                    section.style.display = 'none';
+                    return;
+                }
+                
+                section.style.display = 'block';
+                container.innerHTML = this.quizHistory.map((quiz) => `
+                    <div class="quiz-history-item">
+                        <div>
+                            <div class="quiz-history-title">${quiz.title}</div>
+                            <div class="quiz-history-date">${quiz.date} at ${quiz.time}</div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div class="quiz-history-score">${quiz.score}/${quiz.total} (${quiz.percentage}%)</div>
+                            <button class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85em;" onclick="App.reattemptQuiz('${quiz.quizId}')">
+                                🔄 Reattempt
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            async handleFile(file) {
+                const reader = new FileReader();
+                
+                reader.onload = async (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        
+                        if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+                            const firstQuestion = data.data[0];
+                            
+                            if (firstQuestion.question && firstQuestion.options && firstQuestion.correct_answer) {
+                                this.quizData = data;
+                                this.currentQuizId = await this.saveQuizFile(data);
+                                await this.startQuiz();
+                            } else {
+                                alert('Invalid quiz format. Each question must have: question, options, and correct_answer');
+                            }
+                        } else {
+                            alert('Invalid JSON format. Must contain a "data" array with questions.');
+                        }
+                    } catch (error) {
+                        alert('Error parsing JSON: ' + error.message);
+                    }
+                };
+                
+                reader.readAsText(file);
+            },
+
+            async startQuiz() {
+                this.currentQuestionIndex = 0;
+                this.userAnswers = new Array(this.quizData.data.length).fill(null);
+                
+                document.getElementById('uploadSection').style.display = 'none';
+                document.getElementById('quizSection').style.display = 'block';
+                document.getElementById('resultsSection').style.display = 'none';
+                
+                document.getElementById('totalQuestions').textContent = this.quizData.data.length;
+                
+                this.displayQuestion(false);
+                
+                // Categorize questions with AI in background
+                console.log('Starting AI categorization...');
+                this.questionTopics = await this.categorizeQuestionsWithAI(this.quizData.data);
+                console.log('Categorization complete:', this.questionTopics);
+            },
+
+            displayQuestion(animate = true) {
+                const question = this.quizData.data[this.currentQuestionIndex];
+                const questionCard = document.getElementById('questionCard');
+                
+                if (animate) {
+                    if (this.navigationDirection === 'forward') {
+                        questionCard.style.animation = 'slideIn 0.4s ease-out';
+                    } else {
+                        questionCard.style.animation = 'slideInReverse 0.4s ease-out';
+                    }
+                }
+                
+                document.getElementById('currentQuestion').textContent = this.currentQuestionIndex + 1;
+                
+                // Handle HTML in question text
+                const questionTextEl = document.getElementById('questionText');
+                questionTextEl.innerHTML = this.sanitizeHTML(question.question);
+                
+                const progress = ((this.currentQuestionIndex + 1) / this.quizData.data.length) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+                
+                const optionsContainer = document.getElementById('optionsContainer');
+                optionsContainer.innerHTML = question.options.map((option, index) => `
+                    <div class="option ${this.userAnswers[this.currentQuestionIndex] === option ? 'selected' : ''}" 
+                         data-option-index="${index}">
+                        <div class="option-label">${this.optionLabels[index]}</div>
+                        <div>${this.sanitizeHTML(option)}</div>
+                    </div>
+                `).join('');
+                
+                // Add click handlers
+                document.querySelectorAll('.option').forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        const optionIndex = parseInt(opt.dataset.optionIndex);
+                        this.selectOption(question.options[optionIndex]);
+                    });
+                });
+                
+                document.getElementById('prevBtn').disabled = this.currentQuestionIndex === 0;
+            },
+
+            sanitizeHTML(text) {
+                // Allow basic HTML tags but sanitize to prevent XSS
+                const div = document.createElement('div');
+                div.textContent = text;
+                let sanitized = div.innerHTML;
+                
+                // Allow certain HTML tags
+                const allowedTags = ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'sub', 'sup', 'code', 'pre'];
+                const tagPattern = new RegExp(`&lt;(/?)(${allowedTags.join('|')})(\\s[^&]*?)?&gt;`, 'gi');
+                
+                sanitized = sanitized.replace(tagPattern, '<$1$2$3>');
+                
+                return sanitized;
+            },
+
+            async categorizeQuestionsWithAI(questions) {
+                // Show loading indicator
+                console.log('🤖 AI is categorizing questions...');
+                
+                try {
+                    const questionsText = questions.map((q, i) => 
+                        `${i + 1}. ${q.question.replace(/<[^>]*>/g, '')}`
+                    ).join('\n');
+
+                    const response = await fetch("https://api.anthropic.com/v1/messages", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            model: "claude-sonnet-4-20250514",
+                            max_tokens: 1500,
+                            messages: [
+                                { 
+                                    role: "user", 
+                                    content: `Analyze these quiz questions and categorize each into ONE of these ITI Training Officer (COPA) exam topics:
+
+**Main Topics (Use these exact labels):**
+1. Computer Fundamentals & Hardware
+2. Operating Systems
+3. Office Automation Tools
+4. Networking & Internet
+5. Web Design & Programming
+6. Database Management (DBMS)
+7. Cyber Security
+8. Cloud Computing & E-Commerce
+9. Digital Electronics & Number Systems
+
+**Sub-topics for reference:**
+- Computer Fundamentals: I/O devices, Memory, CPU, Storage, Booting
+- Operating Systems: Linux, Windows, Mac OS, File management
+- Office Tools: MS Word, Excel, PowerPoint
+- Networking: LAN/WAN, Topologies, Protocols, IP addresses
+- Web Design: HTML, CSS, JavaScript, Programming
+- DBMS: SQL commands, Tables, Keys, Normalization
+- Cyber Security: Viruses, Firewalls, Encryption
+- Cloud: IaaS, PaaS, SaaS, E-commerce models
+- Digital Electronics: Number systems, Logic gates
+
+Questions:
+${questionsText}
+
+Return ONLY a valid JSON array with one main topic per question (matching the exact labels above).
+Example: ["Computer Fundamentals & Hardware", "Operating Systems", "Office Automation Tools", ...]
+
+Return ONLY the JSON array:` 
+                                }
+                            ],
+                        })
+                    });
+
+                    const data = await response.json();
+                    console.log('API Response:', data);
+                    
+                    if (data.content && data.content[0] && data.content[0].text) {
+                        let textContent = data.content[0].text.trim();
+                        // Remove markdown code blocks if present
+                        textContent = textContent.replace(/```json\n?|\n?```|```/g, '').trim();
+                        
+                        console.log('Cleaned text:', textContent);
+                        
+                        const topics = JSON.parse(textContent);
+                        
+                        if (Array.isArray(topics) && topics.length === questions.length) {
+                            console.log('✅ AI categorization successful:', topics);
+                            return topics;
+                        } else {
+                            console.warn('⚠️ Topic count mismatch');
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ AI categorization failed:', error);
+                }
+                
+                // Fallback to keyword-based extraction
+                console.log('Using fallback categorization');
+                return questions.map(q => this.extractTopicFallback(q.question));
+            },
+
+            extractTopicFallback(questionText) {
+                const text = questionText.replace(/<[^>]*>/g, '').toLowerCase();
+                
+                // ITI COPA Exam topic keywords mapping
+                const topicKeywords = {
+                    // Computer Fundamentals & Hardware
+                    'keyboard': 'Computer Fundamentals & Hardware',
+                    'printer': 'Computer Fundamentals & Hardware',
+                    'monitor': 'Computer Fundamentals & Hardware',
+                    'scanner': 'Computer Fundamentals & Hardware',
+                    'ram': 'Computer Fundamentals & Hardware',
+                    'rom': 'Computer Fundamentals & Hardware',
+                    'memory': 'Computer Fundamentals & Hardware',
+                    'storage': 'Computer Fundamentals & Hardware',
+                    'cpu': 'Computer Fundamentals & Hardware',
+                    'alu': 'Computer Fundamentals & Hardware',
+                    'processor': 'Computer Fundamentals & Hardware',
+                    'booting': 'Computer Fundamentals & Hardware',
+                    'bios': 'Computer Fundamentals & Hardware',
+                    'hard disk': 'Computer Fundamentals & Hardware',
+                    'byte': 'Computer Fundamentals & Hardware',
+                    
+                    // Operating Systems
+                    'linux': 'Operating Systems',
+                    'unix': 'Operating Systems',
+                    'windows': 'Operating Systems',
+                    'operating system': 'Operating Systems',
+                    'kernel': 'Operating Systems',
+                    'shell': 'Operating Systems',
+                    'file system': 'Operating Systems',
+                    'directory': 'Operating Systems',
+                    
+                    // Office Automation Tools
+                    'word': 'Office Automation Tools',
+                    'excel': 'Office Automation Tools',
+                    'powerpoint': 'Office Automation Tools',
+                    'spreadsheet': 'Office Automation Tools',
+                    'mail merge': 'Office Automation Tools',
+                    'formula': 'Office Automation Tools',
+                    'pivot table': 'Office Automation Tools',
+                    'slide': 'Office Automation Tools',
+                    
+                    // Networking & Internet
+                    'lan': 'Networking & Internet',
+                    'wan': 'Networking & Internet',
+                    'network': 'Networking & Internet',
+                    'router': 'Networking & Internet',
+                    'switch': 'Networking & Internet',
+                    'ip address': 'Networking & Internet',
+                    'protocol': 'Networking & Internet',
+                    'http': 'Networking & Internet',
+                    'smtp': 'Networking & Internet',
+                    'dns': 'Networking & Internet',
+                    'topology': 'Networking & Internet',
+                    'ethernet': 'Networking & Internet',
+                    'modem': 'Networking & Internet',
+                    'gateway': 'Networking & Internet',
+                    
+                    // Web Design & Programming
+                    'html': 'Web Design & Programming',
+                    'css': 'Web Design & Programming',
+                    'javascript': 'Web Design & Programming',
+                    'python': 'Web Design & Programming',
+                    'java': 'Web Design & Programming',
+                    'programming': 'Web Design & Programming',
+                    'variable': 'Web Design & Programming',
+                    'function': 'Web Design & Programming',
+                    'loop': 'Web Design & Programming',
+                    'array': 'Web Design & Programming',
+                    'tag': 'Web Design & Programming',
+                    
+                    // Database Management
+                    'sql': 'Database Management (DBMS)',
+                    'database': 'Database Management (DBMS)',
+                    'table': 'Database Management (DBMS)',
+                    'select': 'Database Management (DBMS)',
+                    'insert': 'Database Management (DBMS)',
+                    'update': 'Database Management (DBMS)',
+                    'delete': 'Database Management (DBMS)',
+                    'primary key': 'Database Management (DBMS)',
+                    'foreign key': 'Database Management (DBMS)',
+                    
+                    // Cyber Security
+                    'virus': 'Cyber Security',
+                    'malware': 'Cyber Security',
+                    'firewall': 'Cyber Security',
+                    'antivirus': 'Cyber Security',
+                    'phishing': 'Cyber Security',
+                    'encryption': 'Cyber Security',
+                    'security': 'Cyber Security',
+                    'cryptography': 'Cyber Security',
+                    'trojan': 'Cyber Security',
+                    'worm': 'Cyber Security',
+                    
+                    // Cloud Computing & E-Commerce
+                    'cloud': 'Cloud Computing & E-Commerce',
+                    'iaas': 'Cloud Computing & E-Commerce',
+                    'paas': 'Cloud Computing & E-Commerce',
+                    'saas': 'Cloud Computing & E-Commerce',
+                    'e-commerce': 'Cloud Computing & E-Commerce',
+                    'b2b': 'Cloud Computing & E-Commerce',
+                    'b2c': 'Cloud Computing & E-Commerce',
+                    
+                    // Digital Electronics
+                    'binary': 'Digital Electronics & Number Systems',
+                    'hexadecimal': 'Digital Electronics & Number Systems',
+                    'logic gate': 'Digital Electronics & Number Systems',
+                    'and gate': 'Digital Electronics & Number Systems',
+                    'or gate': 'Digital Electronics & Number Systems',
+                    'not gate': 'Digital Electronics & Number Systems',
+                };
+                
+                // Check for keyword matches
+                for (const [keyword, topic] of Object.entries(topicKeywords)) {
+                    if (text.includes(keyword)) {
+                        return topic;
+                    }
+                }
+                
+                // Default fallback - try to categorize as programming if it has code-like terms
+                if (text.includes('function') || text.includes('code') || text.includes('syntax')) {
+                    return 'Web Design & Programming';
+                }
+                
+                // Otherwise default to Computer Fundamentals
+                return 'Computer Fundamentals & Hardware';
+            },
+
+            selectOption(option) {
+                this.userAnswers[this.currentQuestionIndex] = option;
+                this.displayQuestion(false);
+                
+                setTimeout(() => {
+                    if (this.currentQuestionIndex < this.quizData.data.length - 1) {
+                        this.navigationDirection = 'forward';
+                        this.nextQuestion();
+                    } else {
+                        setTimeout(() => {
+                            if (confirm('Quiz complete! View results?')) {
+                                this.showResults();
+                            }
+                        }, 500);
+                    }
+                }, 300);
+            },
+
+            previousQuestion() {
+                if (this.currentQuestionIndex > 0) {
+                    this.navigationDirection = 'backward';
+                    this.currentQuestionIndex--;
+                    this.displayQuestion(true);
+                }
+            },
+
+            nextQuestion() {
+                if (this.currentQuestionIndex < this.quizData.data.length - 1) {
+                    this.navigationDirection = 'forward';
+                    this.currentQuestionIndex++;
+                    this.displayQuestion(true);
+                } else {
+                    this.showResults();
+                }
+            },
+
+            showResults() {
+                let correctCount = 0;
+                let answeredCount = 0;
+                const incorrectQuestions = [];
+                const topicStats = {};
+                
+                this.quizData.data.forEach((question, index) => {
+                    const topic = this.questionTopics && this.questionTopics[index] 
+                        ? this.questionTopics[index] 
+                        : this.extractTopicFallback(question.question);
+                    
+                    if (!topicStats[topic]) {
+                        topicStats[topic] = { correct: 0, total: 0 };
+                    }
+                    
+                    if (this.userAnswers[index] !== null) {
+                        answeredCount++;
+                        topicStats[topic].total++;
+                        
+                        if (this.userAnswers[index] === question.correct_answer) {
+                            correctCount++;
+                            topicStats[topic].correct++;
+                        } else {
+                            incorrectQuestions.push({
+                                question: question.question,
+                                userAnswer: this.userAnswers[index],
+                                correctAnswer: question.correct_answer,
+                                topic: topic
+                            });
+                        }
+                    }
+                });
+                
+                const total = this.quizData.data.length;
+                const incorrectCount = answeredCount - correctCount;
+                const percentage = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+                
+                document.getElementById('quizSection').style.display = 'none';
+                document.getElementById('resultsSection').style.display = 'block';
+                
+                document.getElementById('scoreDisplay').textContent = percentage + '%';
+                document.getElementById('finalCorrectCount').textContent = correctCount;
+                document.getElementById('finalIncorrectCount').textContent = incorrectCount;
+                document.getElementById('totalCount').textContent = answeredCount + '/' + total;
+                
+                // Display topics summary
+                const topicsSummaryEl = document.getElementById('topicsSummary');
+                if (Object.keys(topicStats).length > 0) {
+                    // Filter out topics with 0 questions
+                    const sortedTopics = Object.entries(topicStats)
+                        .filter(([topic, stats]) => stats.total > 0)
+                        .sort((a, b) => b[1].total - a[1].total);
+                    
+                    if (sortedTopics.length > 0) {
+                        topicsSummaryEl.innerHTML = `
+                            <h2 style="font-size: 1.3em; color: #1a1a1a; margin-bottom: 15px; transition: color 0.3s ease;" class="dark-mode-text">📊 Performance by Topic</h2>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                                ${sortedTopics.map(([topic, stats]) => {
+                                    const percentage = Math.round((stats.correct / stats.total) * 100);
+                                    let barColor = '#4caf50';
+                                    if (percentage < 50) barColor = '#f44336';
+                                    else if (percentage < 75) barColor = '#ff9800';
+                                    
+                                    return `
+                                    <div style="background: #f8f8f8; padding: 15px; border-radius: 10px; transition: background-color 0.3s ease;" class="dark-mode-card">
+                                        <div style="font-weight: 600; color: #1a1a1a; margin-bottom: 5px; transition: color 0.3s ease;" class="dark-mode-text">${topic}</div>
+                                        <div style="color: #666; font-size: 0.95em; transition: color 0.3s ease;" class="dark-mode-subtext">${stats.correct}/${stats.total} correct (${percentage}%)</div>
+                                        <div style="margin-top: 8px; height: 6px; background: #e0e0e0; border-radius: 3px; overflow: hidden; transition: background-color 0.3s ease;" class="dark-mode-progress-bg">
+                                            <div style="height: 100%; background: ${barColor}; width: ${percentage}%; transition: width 0.5s ease;"></div>
+                                        </div>
+                                    </div>
+                                `}).join('')}
+                            </div>
+                        `;
+                        
+                        // Apply dark mode classes
+                        this.applyDarkModeToElement(topicsSummaryEl);
+                    }
+                }
+                
+                // Display incorrect questions review
+                const reviewSection = document.getElementById('reviewSection');
+                if (incorrectQuestions.length > 0) {
+                    reviewSection.innerHTML = `
+                        <h2>❌ Review Incorrect Answers</h2>
+                        ${incorrectQuestions.map((item, index) => `
+                            <div class="review-item">
+                                <div class="review-question">
+                                    <strong>Q${this.quizData.data.findIndex(q => q.question === item.question) + 1}:</strong> 
+                                    ${this.sanitizeHTML(item.question)}
+                                </div>
+                                <div class="topic-tag">${item.topic}</div>
+                                <div class="review-answer user">
+                                    <strong>Your Answer:</strong> ${this.sanitizeHTML(item.userAnswer)}
+                                </div>
+                                <div class="review-answer correct-ans">
+                                    <strong>Correct Answer:</strong> ${this.sanitizeHTML(item.correctAnswer)}
+                                </div>
+                            </div>
+                        `).join('')}
+                    `;
+                } else {
+                    reviewSection.innerHTML = `
+                        <div style="text-align: center; padding: 30px; background: #e8f5e9; border-radius: 12px;">
+                            <h2 style="color: #2e7d32; margin-bottom: 10px;">🎯 Perfect Score!</h2>
+                            <p style="color: #2e7d32;">You answered all questions correctly!</p>
+                        </div>
+                    `;
+                }
+                
+                this.saveQuizResult(this.quizData.title || 'Quiz', correctCount, total, this.currentQuizId);
+            },
+
+            applyDarkModeToElement(element) {
+                if (document.body.classList.contains('dark-mode')) {
+                    element.querySelectorAll('.dark-mode-text').forEach(el => {
+                        el.style.color = '#e0e0e0';
+                    });
+                    element.querySelectorAll('.dark-mode-subtext').forEach(el => {
+                        el.style.color = '#999';
+                    });
+                    element.querySelectorAll('.dark-mode-card').forEach(el => {
+                        el.style.background = '#333';
+                    });
+                    element.querySelectorAll('.dark-mode-progress-bg').forEach(el => {
+                        el.style.background = '#555';
+                    });
+                }
+            },
+
+            async reattemptQuiz(quizId) {
+                const savedQuiz = await this.loadQuizFile(quizId);
+                
+                if (savedQuiz) {
+                    this.quizData = savedQuiz;
+                    this.currentQuizId = quizId;
+                    await this.startQuiz();
+                } else {
+                    alert('Quiz no longer available.');
+                }
+            },
+
+            async restartQuiz() {
+                await this.startQuiz();
+            },
+
+            loadNewQuiz() {
+                document.getElementById('uploadSection').style.display = 'block';
+                document.getElementById('quizSection').style.display = 'none';
+                document.getElementById('resultsSection').style.display = 'none';
+                document.getElementById('fileInput').value = '';
+            },
+
+            async loadFromText() {
+                const jsonText = document.getElementById('jsonTextarea').value.trim();
+                
+                if (!jsonText) {
+                    alert('Please paste JSON first!');
+                    return;
+                }
+                
+                try {
+                    const data = JSON.parse(jsonText);
+                    if (data.data && Array.isArray(data.data)) {
+                        this.quizData = data;
+                        this.currentQuizId = await this.saveQuizFile(data);
+                        await this.startQuiz();
+                    } else {
+                        alert('Invalid format. Must have "data" array.');
+                    }
+                } catch (error) {
+                    alert('JSON parsing error: ' + error.message);
+                }
+            },
+
+            clearText() {
+                document.getElementById('jsonTextarea').value = '';
+            },
+
+            async clearHistory() {
+                if (confirm('Clear all quiz history?')) {
+                    try {
+                        await window.storage.delete(this.STORAGE_KEY);
+                        this.quizHistory = [];
+                        this.displayQuizHistory();
+                        alert('History cleared!');
+                    } catch (error) {
+                        alert('Error clearing history.');
+                    }
+                }
+            }
+        };
+
+        // Event Listeners
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.body.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        uploadArea.addEventListener('click', (e) => {
+            if (e.target.tagName !== 'BUTTON') {
+                fileInput.click();
+            }
+        });
+
+        uploadArea.addEventListener('dragover', () => {
+            uploadArea.style.borderColor = '#999';
+            uploadArea.style.background = '#f5f5f5';
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#d0d0d0';
+            uploadArea.style.background = '#fafafa';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            uploadArea.style.borderColor = '#d0d0d0';
+            uploadArea.style.background = '#fafafa';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                App.handleFile(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) App.handleFile(file);
+        });
+
+        document.getElementById('loadTextBtn').addEventListener('click', () => App.loadFromText());
+        document.getElementById('clearTextBtn').addEventListener('click', () => App.clearText());
+        document.getElementById('prevBtn').addEventListener('click', () => App.previousQuestion());
+        document.getElementById('nextBtn').addEventListener('click', () => App.nextQuestion());
+        document.getElementById('restartBtn').addEventListener('click', () => App.restartQuiz());
+        document.getElementById('newQuizBtn').addEventListener('click', () => App.loadNewQuiz());
+        document.getElementById('clearHistoryBtn').addEventListener('click', () => App.clearHistory());
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('quizSection').style.display === 'block') {
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    App.nextQuestion();
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    App.previousQuestion();
+                }
+            }
+        });
+
+        // Initialize
+        App.loadQuizHistory();
+
+        // Dark Mode Toggle
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+        
+        // Check for saved dark mode preference
+        const savedDarkMode = localStorage.getItem('darkMode');
+        if (savedDarkMode === 'enabled') {
+            body.classList.add('dark-mode');
+            darkModeToggle.textContent = '☀️';
+        }
+        
+        darkModeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            
+            if (body.classList.contains('dark-mode')) {
+                darkModeToggle.textContent = '☀️';
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                darkModeToggle.textContent = '🌙';
+                localStorage.setItem('darkMode', 'disabled');
+            }
+            
+            // Re-apply dark mode to dynamically created elements
+            const topicsSummary = document.getElementById('topicsSummary');
+            if (topicsSummary) {
+                App.applyDarkModeToElement(topicsSummary);
+            }
+        });
+    </script>
+</body>
+</html>
