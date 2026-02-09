@@ -128,9 +128,9 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Health check endpoint for Railway/Netlify
-  app.get("/", (req, res) => {
-    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  // Health check endpoint
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok" });
   });
 
   // Quiz generation endpoint
