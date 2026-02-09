@@ -118,18 +118,14 @@ export function categorizeQuestion(questionText: string): string {
 }
 
 export function sanitizeHTML(text: string): string {
-  // Simple sanitation (in a real app, use DOMPurify)
-  // This is a basic implementation to match the provided snippet's intent
-  const allowedTags = ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'sub', 'sup', 'code', 'pre'];
+  // Escape HTML special characters to prevent rendering as HTML elements
+  const escapeMap: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#x27;',
+  };
   
-  // Create a temporary element to leverage browser's parsing
-  // Note: Since we are in Node environment for build, we might not have 'document'
-  // But this runs in browser.
-  
-  // For safety in this mockup without pulling in DOMPurify, we'll strip most tags
-  // or just trust the input if it's a known format, but let's do a basic regex replacement
-  // similar to the original snippet.
-  
-  return text; // For React, we'll use dangerouslySetInnerHTML but we should be careful.
-               // In this prototype, we'll trust the input for now as per instructions "mockup mode"
+  return text.replace(/[&<>"']/g, (char) => escapeMap[char] || char);
 }

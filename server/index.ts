@@ -1,3 +1,24 @@
+import * as fs from "fs";
+import * as path from "path";
+
+// Load .env.local BEFORE any other code runs
+const envPath = path.join(process.cwd(), ".env.local");
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, "utf-8");
+  const lines = envContent.split("\n");
+  for (const line of lines) {
+    if (line.trim() && !line.startsWith("#")) {
+      const [key, ...valueParts] = line.split("=");
+      const value = valueParts.join("=").trim();
+      if (key && !process.env[key.trim()]) {
+        process.env[key.trim()] = value;
+      }
+    }
+  }
+  console.log("[ENV] Loaded .env.local - DATABASE_URL:", !!process.env.DATABASE_URL);
+}
+
+// NOW import everything else (after env is loaded)
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -88,11 +109,12 @@ app.use((req, res, next) => {
   httpServer.listen(
     {
       port,
-      host: "0.0.0.0",
-      reusePort: true,
+      host: "127.0.0.1",
     },
     () => {
       log(`serving on port ${port}`);
     },
   );
 })();
+
+

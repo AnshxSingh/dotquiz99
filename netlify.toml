@@ -1,0 +1,56 @@
+# Netlify Configuration for DotQuiz
+
+[build]
+  # Command to build the project
+  command = "npm run build"
+  # Directory that gets deployed
+  publish = "dist/public"
+  # Functions directory for serverless functions (if needed)
+  functions = "netlify/functions"
+
+[functions]
+  # Node.js version for serverless functions
+  node_bundler = "esbuild"
+
+[[redirects]]
+  # Redirect all routes to index.html for client-side routing
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  # Cache policy for static assets
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  # Headers for HTML files (no caching to get latest)
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  # Security headers
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[context.production]
+  command = "npm run build"
+  publish = "dist/public"
+
+[context.deploy-preview]
+  command = "npm run build"
+  publish = "dist/public"
+
+[context.branch-deploy]
+  command = "npm run build"
+  publish = "dist/public"
+
+# Environment variables (set these in Netlify dashboard)
+# NODE_ENV = "production"
+# NODE_OPTIONS = "--max-old-space-size=1024"

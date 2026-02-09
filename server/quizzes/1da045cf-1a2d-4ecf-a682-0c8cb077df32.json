@@ -1,0 +1,17 @@
+{
+  "id": "1da045cf-1a2d-4ecf-a682-0c8cb077df32",
+  "title": "uu",
+  "data": [
+    {
+      "question": "What is CPU?",
+      "options": [
+        "Central Processing Unit",
+        "Computer Personal Unit",
+        "Central Process Utility",
+        "Central Program Unit"
+      ],
+      "correct_answer": "Central Processing Unit"
+    }
+  ],
+  "createdAt": "2026-02-09T09:55:29.825Z"
+}
