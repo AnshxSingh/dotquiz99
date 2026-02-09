@@ -109,12 +109,21 @@ app.use((req, res, next) => {
   httpServer.listen(
     {
       port,
-      host: "127.0.0.1",
+      host: "0.0.0.0",
     },
     () => {
       log(`serving on port ${port}`);
     },
   );
 })();
+
+// Graceful shutdown
+process.on("SIGTERM", () => {
+  console.log("SIGTERM signal received: closing HTTP server");
+  httpServer.close(() => {
+    console.log("HTTP server closed");
+    process.exit(0);
+  });
+});
 
 
