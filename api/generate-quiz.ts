@@ -118,7 +118,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { type, prompt, numQuestions } = req.body;
+    const rawBody = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const { type, prompt, numQuestions } = rawBody || {};
 
     if (!type || !numQuestions || numQuestions < 1 || numQuestions > 50) {
       return res.status(400).json({

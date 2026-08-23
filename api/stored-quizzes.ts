@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getPool, ensureTables } from "./_db";
+import { getSql, ensureTables } from "./_db";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "GET") {
@@ -8,29 +8,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     await ensureTables();
+    const sql = getSql();
+    const rows = await sql`
+      SELECT * FROM quizzes ORDER BY created_at DESC
+    `;
 
-    const pool = getPool();
-    const result = await pool.query(
-      "SELECT * FROM quizzes ORDER BY created_at DESC"
-    );
-
-    const quizzes = result.rows.map((row) => {
+    const quizzes = rows.map((row: any) => {
       const parsedData =
         typeof row.data === "string" ? JSON.parse(row.data) : row.data;
       return {
         id: row.id,
         title: row.title,
-        data: parsedData.data,
+        data: parsedData?.data || parsedData,
         createdAt: row.created_at,
       };
     });
 
     return res.status(200).json(quizzes);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error retrieving quizzes:", error);
     return res.status(500).json({
       error: "Failed to retrieve quizzes",
-      message: error instanceof Error ? error.message : "Unknown error",
+      message: error?.message || "Unknown error",
+      detail: String(error),
     });
   }
 }

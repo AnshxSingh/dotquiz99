@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { randomUUID } from "crypto";
-import { getPool, ensureTables } from "./_db";
+import { getSql, ensureTables } from "./_db";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -8,9 +8,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    await ensureTables();
-
-    const { title, quizData } = req.body;
+    const rawBody = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const { title, quizData } = rawBody || {};
 
     if (!title || !title.trim()) {
       return res.status(400).json({ error: "Quiz title is required" });
@@ -35,29 +34,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
+    await ensureTables();
+    const sql = getSql();
     const id = randomUUID();
     const data = quizData.data;
 
-    const pool = getPool();
-    const result = await pool.query(
-      "INSERT INTO quizzes (id, title, data) VALUES ($1, $2, $3) RETURNING *",
-      [id, title.trim(), JSON.stringify({ data })]
-    );
+    const rows = await sql`
+      INSERT INTO quizzes (id, title, data)
+      VALUES (${id}, ${title.trim()}, ${JSON.stringify({ data })})
+      RETURNING *
+    `;
 
-    const row = result.rows[0];
+    const row = rows[0];
     const parsedData = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
 
     return res.status(201).json({
       id: row.id,
       title: row.title,
-      data: parsedData.data,
+      data: parsedData?.data || parsedData,
       createdAt: row.created_at,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error saving quiz:", error);
     return res.status(500).json({
       error: "Failed to save quiz",
-      message: error instanceof Error ? error.message : "Unknown error",
+      message: error?.message || "Unknown error",
+      detail: String(error),
     });
   }
 }

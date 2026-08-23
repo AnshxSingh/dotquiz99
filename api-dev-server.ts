@@ -32,44 +32,47 @@ if (fs.existsSync(envPath)) {
 
 import express from "express";
 import { randomUUID } from "crypto";
-import { Pool } from "pg";
+import { neon } from "@neondatabase/serverless";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// ─── DB Pool ──────────────────────────────────────────────────────────────────
+// ─── DB Helper ────────────────────────────────────────────────────────────────
 
-let pool: Pool | null = null;
-
-function getPool(): Pool {
-  if (!pool) {
-    const connectionString = process.env.DATABASE_URL;
-    if (!connectionString) {
-      throw new Error("DATABASE_URL is not set in .env.local");
-    }
-    pool = new Pool({ connectionString, ssl: { rejectUnauthorized: false } });
+function getSql() {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL is not set in .env.local");
   }
-  return pool;
+  return neon(connectionString);
 }
 
+let tablesInitialized = false;
+
 async function ensureTables() {
-  const db = getPool();
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id UUID PRIMARY KEY,
-      username VARCHAR(255) UNIQUE NOT NULL,
-      password VARCHAR(255)
-    );
-  `);
-  await db.query(`
-    CREATE TABLE IF NOT EXISTS quizzes (
-      id UUID PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      data JSONB NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
+  if (tablesInitialized) return;
+  try {
+    const sql = getSql();
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id UUID PRIMARY KEY,
+        username VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255)
+      )
+    `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS quizzes (
+        id UUID PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    tablesInitialized = true;
+  } catch (error) {
+    console.error("Failed to ensure tables:", error);
+  }
 }
 
 // ─── Mock Quiz ─────────────────────────────────────────────────────────────────
@@ -180,7 +183,8 @@ app.get("/api/health", (_req, res) => {
 
 app.post("/api/generate-quiz", async (req, res) => {
   try {
-    const { type, prompt, numQuestions } = req.body;
+    const rawBody = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const { type, prompt, numQuestions } = rawBody || {};
     if (!type || !numQuestions || numQuestions < 1 || numQuestions > 50) {
       return res.status(400).json({ error: "Invalid input" });
     }
@@ -203,7 +207,8 @@ app.post("/api/generate-quiz", async (req, res) => {
 app.post("/api/save-quiz", async (req, res) => {
   try {
     await ensureTables();
-    const { title, quizData } = req.body;
+    const rawBody = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    const { title, quizData } = rawBody || {};
     if (!title?.trim()) return res.status(400).json({ error: "Title required" });
     if (!quizData?.data || !Array.isArray(quizData.data)) {
       return res.status(400).json({ error: "Invalid quiz data" });
@@ -213,38 +218,50 @@ app.post("/api/save-quiz", async (req, res) => {
     }
 
     const id = randomUUID();
-    const db = getPool();
-    const result = await db.query(
-      "INSERT INTO quizzes (id, title, data) VALUES ($1, $2, $3) RETURNING *",
-      [id, title.trim(), JSON.stringify({ data: quizData.data })]
-    );
-    const row = result.rows[0];
+    const sql = getSql();
+    const rows = await sql`
+      INSERT INTO quizzes (id, title, data)
+      VALUES (${id}, ${title.trim()}, ${JSON.stringify({ data: quizData.data })})
+      RETURNING *
+    `;
+    const row = rows[0];
     const parsedData = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
     return res.status(201).json({
       id: row.id,
       title: row.title,
-      data: parsedData.data,
+      data: parsedData?.data || parsedData,
       createdAt: row.created_at,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error saving quiz:", error);
-    return res.status(500).json({ error: "Failed to save quiz" });
+    return res.status(500).json({
+      error: "Failed to save quiz",
+      message: error?.message || "Unknown error",
+    });
   }
 });
 
 app.get("/api/stored-quizzes", async (_req, res) => {
   try {
     await ensureTables();
-    const db = getPool();
-    const result = await db.query("SELECT * FROM quizzes ORDER BY created_at DESC");
-    const quizzes = result.rows.map((row) => {
+    const sql = getSql();
+    const rows = await sql`SELECT * FROM quizzes ORDER BY created_at DESC`;
+    const quizzes = rows.map((row: any) => {
       const parsedData = typeof row.data === "string" ? JSON.parse(row.data) : row.data;
-      return { id: row.id, title: row.title, data: parsedData.data, createdAt: row.created_at };
+      return {
+        id: row.id,
+        title: row.title,
+        data: parsedData?.data || parsedData,
+        createdAt: row.created_at,
+      };
     });
     return res.json(quizzes);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error retrieving quizzes:", error);
-    return res.status(500).json({ error: "Failed to retrieve quizzes" });
+    return res.status(500).json({
+      error: "Failed to retrieve quizzes",
+      message: error?.message || "Unknown error",
+    });
   }
 });
 
@@ -253,15 +270,18 @@ app.delete("/api/delete-quiz/:quizId", async (req, res) => {
     await ensureTables();
     const { quizId } = req.params;
     if (!quizId) return res.status(400).json({ error: "Quiz ID required" });
-    const db = getPool();
-    const result = await db.query("DELETE FROM quizzes WHERE id = $1", [quizId]);
-    if (!result.rowCount || result.rowCount === 0) {
+    const sql = getSql();
+    const rows = await sql`DELETE FROM quizzes WHERE id = ${quizId} RETURNING id`;
+    if (!rows || rows.length === 0) {
       return res.status(404).json({ error: "Quiz not found" });
     }
     return res.json({ message: "Quiz deleted successfully" });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error deleting quiz:", error);
-    return res.status(500).json({ error: "Failed to delete quiz" });
+    return res.status(500).json({
+      error: "Failed to delete quiz",
+      message: error?.message || "Unknown error",
+    });
   }
 });
 
