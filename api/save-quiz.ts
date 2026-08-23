@@ -1,10 +1,26 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { randomUUID } from "crypto";
-import { getSql, ensureTables } from "./_db";
+import { neon } from "@neondatabase/serverless";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    return res.status(500).json({
+      error: "DATABASE_URL environment variable is missing",
+      help: "Add DATABASE_URL in Vercel Settings > Environment Variables and redeploy",
+    });
   }
 
   try {
@@ -34,8 +50,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    await ensureTables();
-    const sql = getSql();
+    const sql = neon(databaseUrl);
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS quizzes (
+        id UUID PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
     const id = randomUUID();
     const data = quizData.data;
 
@@ -59,7 +84,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({
       error: "Failed to save quiz",
       message: error?.message || "Unknown error",
-      detail: String(error),
     });
   }
 }
