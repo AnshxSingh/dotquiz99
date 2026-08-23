@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { SAMPLE_JSON } from "./UploadSection";
 
 interface JsonQuizzesSectionProps {
   onQuizStart: (data: QuizData, quizId?: string) => void;
@@ -18,6 +19,7 @@ export function JsonQuizzesSection({ onQuizStart }: JsonQuizzesSectionProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [storedQuizzes, setStoredQuizzes] = useState<StoredJsonQuiz[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isSampleCopied, setIsSampleCopied] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [deletePasswordInput, setDeletePasswordInput] = useState("");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -160,6 +162,26 @@ export function JsonQuizzesSection({ onQuizStart }: JsonQuizzesSectionProps) {
     return { valid: true, message: "" };
   };
 
+  const handleCopySample = () => {
+    const sampleString = JSON.stringify(SAMPLE_JSON, null, 2);
+    navigator.clipboard.writeText(sampleString).then(() => {
+      setJsonText(sampleString);
+      if (!quizTitle) setQuizTitle("Sample Quiz (3 Questions)");
+      setIsSampleCopied(true);
+      setTimeout(() => setIsSampleCopied(false), 2000);
+      toast({
+        title: "Sample Copied & Loaded!",
+        description: "3-question sample JSON copied to clipboard and loaded into editor"
+      });
+    }).catch(() => {
+      toast({
+        title: "Error",
+        description: "Failed to copy to clipboard",
+        variant: "destructive"
+      });
+    });
+  };
+
   const handleSaveQuiz = async () => {
     if (!jsonText.trim()) {
       toast({
@@ -246,7 +268,7 @@ export function JsonQuizzesSection({ onQuizStart }: JsonQuizzesSectionProps) {
     if (deletePasswordInput !== "Ansh123") {
       toast({
         title: "Error",
-        description: "Incorrect password",
+        description: "Incorrect password. Please try again.",
         variant: "destructive"
       });
       return;
@@ -308,10 +330,22 @@ export function JsonQuizzesSection({ onQuizStart }: JsonQuizzesSectionProps) {
       {/* Upload & Paste Section */}
       <div className="bg-card rounded-xl md:rounded-2xl shadow-sm border border-border/50 overflow-hidden">
         <div className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 md:p-6 border-b border-border/50">
-          <h2 className="text-lg md:text-xl font-bold text-foreground flex items-center gap-2">
-            <Upload className="w-5 h-5" />
-            Add & Save Quiz to Cloud
-          </h2>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-lg md:text-xl font-bold text-foreground flex items-center gap-2">
+              <Upload className="w-5 h-5" />
+              Add & Save Quiz to Cloud
+            </h2>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleCopySample}
+              className="text-xs md:text-sm"
+              title="Copy 3-question sample quiz"
+            >
+              {isSampleCopied ? <Check className="w-3.5 h-3.5 mr-1.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
+              {isSampleCopied ? "Copied!" : "Copy Sample Quiz"}
+            </Button>
+          </div>
           <p className="text-sm text-muted-foreground mt-1">
             Upload JSON files or paste JSON text. Quizzes are saved to cloud.
           </p>
@@ -325,7 +359,7 @@ export function JsonQuizzesSection({ onQuizStart }: JsonQuizzesSectionProps) {
             </label>
             <Input
               type="text"
-              placeholder="Enter quiz name"
+              placeholder="Enter quiz name (e.g. Computer Fundamentals)"
               value={quizTitle}
               onChange={(e) => setQuizTitle(e.target.value)}
               className="w-full"
@@ -388,13 +422,24 @@ export function JsonQuizzesSection({ onQuizStart }: JsonQuizzesSectionProps) {
 
           {/* JSON Editor */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              JSON Content *
-            </label>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <label className="block text-sm font-medium text-foreground">
+                JSON Content *
+              </label>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleCopySample}
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+              >
+                {isSampleCopied ? <Check className="w-3 h-3 mr-1 text-green-600" /> : <Copy className="w-3 h-3 mr-1" />}
+                {isSampleCopied ? "Sample Loaded!" : "Load 3-Q Sample"}
+              </Button>
+            </div>
             <Textarea
               value={jsonText}
               onChange={(e) => setJsonText(e.target.value)}
-              placeholder='Paste JSON here or drag & drop a file above...'
+              placeholder='Paste JSON here or click "Load 3-Q Sample"...'
               className="w-full h-48 font-mono text-xs"
             />
             <div className="flex justify-between items-start mt-2">
@@ -418,6 +463,13 @@ export function JsonQuizzesSection({ onQuizStart }: JsonQuizzesSectionProps) {
             >
               <Plus className="w-4 h-4 mr-2" />
               Save to Cloud
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleCopySample}
+            >
+              <Copy className="w-4 h-4 mr-2" />
+              Load Sample
             </Button>
             {jsonText && (
               <Button

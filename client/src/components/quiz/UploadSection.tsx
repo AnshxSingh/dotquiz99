@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Copy, Trash2, Play } from "lucide-react";
+import { Copy, Trash2, Play, Check } from "lucide-react";
 import { QuizData } from "@/lib/quiz-types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,10 +9,10 @@ interface UploadSectionProps {
   onQuizStart: (data: QuizData) => void;
 }
 
-const SAMPLE_JSON = {
+export const SAMPLE_JSON = {
   data: [
     {
-      question: "What is CPU?",
+      question: "What does CPU stand for?",
       options: [
         "Central Processing Unit",
         "Computer Personal Unit",
@@ -20,6 +20,26 @@ const SAMPLE_JSON = {
         "Central Program Unit"
       ],
       correct_answer: "Central Processing Unit"
+    },
+    {
+      question: "Which programming language is primarily used for styling web pages?",
+      options: [
+        "HTML",
+        "CSS",
+        "JavaScript",
+        "Python"
+      ],
+      correct_answer: "CSS"
+    },
+    {
+      question: "What does RAM stand for in computing?",
+      options: [
+        "Read Access Memory",
+        "Random Access Memory",
+        "Run Auto Module",
+        "Rapid Application Mode"
+      ],
+      correct_answer: "Random Access Memory"
     }
   ]
 };
@@ -27,6 +47,7 @@ const SAMPLE_JSON = {
 export function UploadSection({ onQuizStart }: UploadSectionProps) {
   const [jsonText, setJsonText] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -133,9 +154,11 @@ export function UploadSection({ onQuizStart }: UploadSectionProps) {
     const sampleString = JSON.stringify(SAMPLE_JSON, null, 2);
     navigator.clipboard.writeText(sampleString).then(() => {
       setJsonText(sampleString);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
       toast({
-        title: "Sample Loaded!",
-        description: "Sample JSON loaded into the editor",
+        title: "Sample Copied & Loaded!",
+        description: "3-question sample JSON copied to clipboard and loaded into editor",
       });
     }).catch(() => {
       toast({
@@ -151,7 +174,19 @@ export function UploadSection({ onQuizStart }: UploadSectionProps) {
       <div className="p-4 md:p-6 lg:p-10">
         {/* Unified Input Area - File Drop + Text */}
         <div className="mb-6 md:mb-8">
-          <h3 className="text-foreground font-medium text-base md:text-lg mb-3 md:mb-4">📝 Enter Your Quiz Data</h3>
+          <div className="flex items-center justify-between gap-2 mb-3 md:mb-4">
+            <h3 className="text-foreground font-medium text-base md:text-lg">📝 Enter Your Quiz Data</h3>
+            <Button
+              onClick={handleCopySample}
+              size="sm"
+              variant="secondary"
+              className="text-xs md:text-sm font-medium"
+              data-testid="button-copy-sample-top"
+            >
+              {isCopied ? <Check className="w-3.5 h-3.5 mr-1.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 mr-1.5" />}
+              {isCopied ? "Copied!" : "Copy Sample Quiz"}
+            </Button>
+          </div>
           
           {/* File Drop Zone */}
           <div 
@@ -199,7 +234,8 @@ export function UploadSection({ onQuizStart }: UploadSectionProps) {
               className="border-border text-foreground hover:bg-secondary text-sm md:text-base"
               data-testid="button-copy-sample"
             >
-              <Copy className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Load Sample
+              {isCopied ? <Check className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2 text-green-600" /> : <Copy className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />}
+              {isCopied ? "Copied!" : "Load Sample"}
             </Button>
             <Button variant="outline" onClick={() => setJsonText("")} className="border-border text-foreground hover:bg-secondary text-sm md:text-base" data-testid="button-clear">
               <Trash2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" /> Clear
@@ -209,7 +245,18 @@ export function UploadSection({ onQuizStart }: UploadSectionProps) {
 
         {/* Sample JSON Format Display */}
         <div className="pt-6 md:pt-8 border-t border-border">
-          <h3 className="text-foreground font-medium text-base md:text-lg mb-3 md:mb-4">📋 JSON Format:</h3>
+          <div className="flex items-center justify-between gap-2 mb-3 md:mb-4">
+            <h3 className="text-foreground font-medium text-base md:text-lg">📋 JSON Format (3 Questions Sample):</h3>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleCopySample}
+              className="text-xs"
+            >
+              {isCopied ? <Check className="w-3.5 h-3.5 mr-1 text-green-600" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
+              {isCopied ? "Copied!" : "Copy JSON"}
+            </Button>
+          </div>
           <div className="bg-background rounded-lg border border-border/50 overflow-hidden">
             <pre className="p-3 md:p-4 overflow-x-auto text-xs text-muted-foreground">
               <code>{JSON.stringify(SAMPLE_JSON, null, 2)}</code>
