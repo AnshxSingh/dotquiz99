@@ -180,6 +180,27 @@ export function QuizSection({
     }
   };
 
+  // Action: Save & Previous (Saves response and moves to previous question)
+  const handleSaveAndPrevious = () => {
+    const newAnswers = [...answers];
+    newAnswers[currentIndex] = selectedOption;
+    setAnswers(newAnswers);
+
+    setStatuses((prev) => {
+      const next = [...prev];
+      if (selectedOption !== null) {
+        next[currentIndex] = "answered";
+      } else {
+        next[currentIndex] = "not_answered";
+      }
+      return next;
+    });
+
+    if (currentIndex > 0) {
+      goToQuestion(currentIndex - 1);
+    }
+  };
+
   // Action: Mark for Review & Next (Purple)
   const handleMarkForReviewAndNext = () => {
     const newAnswers = [...answers];
@@ -504,12 +525,12 @@ export function QuizSection({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => goToQuestion(currentIndex - 1)}
+                onClick={handleSaveAndPrevious}
                 disabled={currentIndex === 0}
                 className="text-xs md:text-sm bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
-                Previous
+                Save & Previous
               </Button>
 
               <Button

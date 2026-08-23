@@ -82,6 +82,10 @@ export function CbtInstructionsModal({
                 <span>Saves your selected response, marks question Green, and advances to the next question.</span>
               </li>
               <li className="flex items-start gap-2">
+                <span className="px-2 py-0.5 bg-slate-800 text-slate-300 font-bold rounded shrink-0 border border-slate-700">Save & Previous</span>
+                <span>Saves your selected response, marks question Green, and moves back to the previous question.</span>
+              </li>
+              <li className="flex items-start gap-2">
                 <span className="px-2 py-0.5 bg-purple-600 text-white font-bold rounded shrink-0">Mark for Review & Next</span>
                 <span>Marks the question for review (and saves the option if chosen), advancing to the next question.</span>
               </li>
