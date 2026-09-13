@@ -8,9 +8,7 @@ import { QuizSection, CbtQuizResult } from "@/components/quiz/QuizSection";
 import { ResultsSection } from "@/components/quiz/ResultsSection";
 import { HistorySection } from "@/components/quiz/HistorySection";
 import { CbtExamStartModal, CbtExamConfig } from "@/components/quiz/CbtExamStartModal";
-import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { QuizData, StoredQuiz } from "@/lib/quiz-types";
-
 import { nanoid } from "nanoid";
 
 type ViewState = "upload" | "quiz" | "results";
@@ -157,17 +155,15 @@ export default function Home() {
           )}
 
           {view === "results" && quizData && cbtResult && (
-            <ErrorBoundary fallbackTitle="Error loading exam results" onReset={handleRestart}>
-              <ResultsSection
-                data={quizData}
-                userAnswers={cbtResult.answers}
-                statuses={cbtResult.statuses}
-                timeTakenSeconds={cbtResult.timeTakenSeconds}
-                markingScheme={cbtResult.markingScheme}
-                candidateName={cbtResult.candidateName}
-                onRestart={handleRestart}
-              />
-            </ErrorBoundary>
+            <ResultsSection
+              data={quizData}
+              userAnswers={cbtResult.answers}
+              statuses={cbtResult.statuses}
+              timeTakenSeconds={cbtResult.timeTakenSeconds}
+              markingScheme={cbtResult.markingScheme}
+              candidateName={cbtResult.candidateName}
+              onRestart={handleRestart}
+            />
           )}
 
         </main>
