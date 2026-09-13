@@ -17,17 +17,17 @@ export function CbtInstructionsModal({
 }: CbtInstructionsModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col bg-slate-900 border-slate-700 text-slate-100 p-0 overflow-hidden">
-        <DialogHeader className="p-4 border-b border-slate-800 bg-slate-950 flex flex-row items-center justify-between">
+      <DialogContent className="max-w-[95vw] md:max-w-3xl max-h-[85vh] flex flex-col bg-slate-900 border-slate-700 text-slate-100 p-0 overflow-hidden">
+        <DialogHeader className="p-3 sm:p-4 border-b border-slate-800 bg-slate-950 flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <Info className="w-5 h-5 text-yellow-400" />
-            <DialogTitle className="text-lg font-bold text-slate-100">
+            <Info className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 shrink-0" />
+            <DialogTitle className="text-sm sm:text-base md:text-lg font-bold text-slate-100 truncate">
               General Instructions & CBT Navigation Guide
             </DialogTitle>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 text-sm text-slate-300 leading-relaxed">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-4 sm:space-y-6 text-xs sm:text-sm text-slate-300 leading-relaxed">
           {/* General Section */}
           <div>
             <h3 className="text-base font-bold text-white mb-2 flex items-center gap-2">

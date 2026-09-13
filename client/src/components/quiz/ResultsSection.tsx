@@ -1,8 +1,16 @@
-import { useEffect, useState } from "react";
-import { QuizData, QuestionResult } from "@/lib/quiz-types";
-import { categorizeQuestion, sanitizeHTML } from "@/lib/quiz-utils";
+import { useEffect, useState, useMemo } from "react";
+import { QuizData } from "@/lib/quiz-types";
+import { sanitizeHTML } from "@/lib/quiz-utils";
 import { Button } from "@/components/ui/button";
-import { RotateCcw, Award, CheckCircle2, XCircle, Clock, Check, HelpCircle, FileCheck } from "lucide-react";
+import { 
+  RotateCcw, 
+  Award, 
+  CheckCircle2, 
+  XCircle, 
+  Clock, 
+  HelpCircle, 
+  FileCheck
+} from "lucide-react";
 import { CbtStatus } from "./CbtStatusIcon";
 
 interface ResultsSectionProps {
@@ -20,73 +28,59 @@ export function ResultsSection({
   userAnswers,
   statuses = [],
   timeTakenSeconds = 0,
-  markingScheme = { correct: 4, incorrect: 1 },
+  markingScheme = { correct: 1, incorrect: 0.25 },
   candidateName = "Candidate",
   onRestart,
 }: ResultsSectionProps) {
-  const [stats, setStats] = useState<{
-    correctCount: number;
-    incorrectCount: number;
-    unattemptedCount: number;
-    total: number;
-    score: number;
-    maxScore: number;
-    percentage: number;
-    accuracy: number;
-    allQuestionsReview: {
-      question: string;
-      options: string[];
-      userAnswer: string | null;
-      correctAnswer: string;
-      topic: string;
-      isCorrect: boolean;
-      status: CbtStatus;
-    }[];
-  } | null>(null);
+  // Compute question review
+  const allQuestionsReview = useMemo(() => {
+    const rawList = data?.data && Array.isArray(data.data) ? data.data : [];
+    return rawList.map((question, index) => {
+      const userAnswer = userAnswers ? userAnswers[index] : null;
+      const status = (statuses && statuses[index]) || (userAnswer ? "answered" : "not_visited");
+      const isAttempted = userAnswer !== null && userAnswer !== undefined;
+      const isCorrect = isAttempted && String(userAnswer).trim() === String(question?.correct_answer || "").trim();
 
-  useEffect(() => {
+      return {
+        question: String(question?.question || ""),
+        options: Array.isArray(question?.options) ? question.options : [],
+        userAnswer,
+        correctAnswer: String(question?.correct_answer || ""),
+        isCorrect,
+        isAttempted,
+        status,
+      };
+    });
+  }, [data, userAnswers, statuses]);
+
+  // Compute aggregate stats
+  const stats = useMemo(() => {
     let correctCount = 0;
     let incorrectCount = 0;
     let unattemptedCount = 0;
 
-    const allQuestionsReview = data.data.map((question, index) => {
-      const topic = categorizeQuestion(question.question);
-      const userAnswer = userAnswers[index];
-      const status = statuses[index] || (userAnswer ? "answered" : "not_visited");
-      const isAttempted = userAnswer !== null;
-
-      let isCorrect = false;
-      if (isAttempted) {
-        if (userAnswer === question.correct_answer) {
-          correctCount++;
-          isCorrect = true;
-        } else {
-          incorrectCount++;
-          isCorrect = false;
-        }
-      } else {
+    allQuestionsReview.forEach((item) => {
+      if (!item.isAttempted) {
         unattemptedCount++;
+      } else if (item.isCorrect) {
+        correctCount++;
+      } else {
+        incorrectCount++;
       }
-
-      return {
-        question: question.question,
-        options: question.options,
-        userAnswer,
-        correctAnswer: question.correct_answer,
-        topic,
-        isCorrect,
-        status,
-      };
     });
 
-    const total = data.data.length;
-    const score = (correctCount * markingScheme.correct) - (incorrectCount * markingScheme.incorrect);
-    const maxScore = total * markingScheme.correct;
+    const total = allQuestionsReview.length;
+    const correctMark = Number(markingScheme?.correct ?? 1);
+    const incorrectMark = Number(markingScheme?.incorrect ?? 0.25);
+
+    const rawScore = (correctCount * correctMark) - (incorrectCount * incorrectMark);
+    const score = Number(rawScore.toFixed(2));
+    const maxScore = Number((total * correctMark).toFixed(2));
     const percentage = maxScore > 0 ? Math.max(0, Math.round((score / maxScore) * 100)) : 0;
     const attempted = correctCount + incorrectCount;
     const accuracy = attempted > 0 ? Math.round((correctCount / attempted) * 100) : 0;
 
-    setStats({
+    return {
       correctCount,
       incorrectCount,
       unattemptedCount,
@@ -95,11 +89,10 @@ export function ResultsSection({
       maxScore,
       percentage,
       accuracy,
-      allQuestionsReview,
-    });
-  }, [data, userAnswers, statuses, markingScheme]);
-
-  if (!stats) return null;
+      correctMark,
+      incorrectMark,
+    };
+  }, [allQuestionsReview, markingScheme]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -127,7 +120,7 @@ export function ResultsSection({
           <strong className="text-slate-200">{formatTime(timeTakenSeconds)}</strong>
         </p>
 
-        {/* Score Ring / Big Numbers */}
+        {/* Score Numbers Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 max-w-2xl mx-auto">
           {/* Total Score */}
           <div className="p-3.5 bg-slate-900/80 rounded-xl border border-slate-700/80 shadow-md">
@@ -153,7 +146,7 @@ export function ResultsSection({
             <div className="text-2xl md:text-3xl font-extrabold text-green-400 mt-1">
               {stats.correctCount}
             </div>
-            <div className="text-[11px] text-green-400/80 mt-0.5">+{stats.correctCount * markingScheme.correct} marks</div>
+            <div className="text-[11px] text-green-400/80 mt-0.5">+{stats.correctCount * stats.correctMark} marks</div>
           </div>
 
           {/* Incorrect */}
@@ -163,7 +156,7 @@ export function ResultsSection({
               {stats.incorrectCount}
             </div>
             <div className="text-[11px] text-red-400/80 mt-0.5">
-              {stats.incorrectCount > 0 ? `-${stats.incorrectCount * markingScheme.incorrect} marks` : "0 marks"}
+              {stats.incorrectCount > 0 ? `-${stats.incorrectCount * stats.incorrectMark}` : "0"} marks
             </div>
           </div>
         </div>
@@ -211,47 +204,56 @@ export function ResultsSection({
 
       {/* 3. Question-by-Question Detailed Review */}
       <div className="space-y-4">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          📝 Question Review ({stats.allQuestionsReview.length} Questions)
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            📝 Question Review ({allQuestionsReview.length} Questions)
+          </h2>
+          <span className="text-xs text-slate-400">
+            {stats.correctCount} Correct • {stats.incorrectCount} Incorrect • {stats.unattemptedCount} Unattempted
+          </span>
+        </div>
 
         <div className="space-y-4">
-          {stats.allQuestionsReview.map((item, idx) => {
+          {allQuestionsReview.map((item, idx) => {
             const isCorrect = item.isCorrect;
-            const isSkipped = item.userAnswer === null;
+            const isSkipped = !item.isAttempted;
+
+            // Distinctive unsaturated styling for unattempted questions
+            const cardContainerStyle = isCorrect
+              ? "bg-green-950/15 border-green-800/40 text-slate-100"
+              : isSkipped
+              ? "bg-slate-900/30 border-slate-800/50 text-slate-400 opacity-80 saturate-0 hover:opacity-100 hover:saturate-100 transition-all duration-200"
+              : "bg-red-950/15 border-red-800/40 text-slate-100";
 
             return (
               <div
                 key={idx}
-                className={`p-4 md:p-5 rounded-xl border transition-all ${
-                  isCorrect
-                    ? "bg-green-950/15 border-green-800/40"
-                    : isSkipped
-                    ? "bg-slate-900/60 border-slate-800"
-                    : "bg-red-950/15 border-red-800/40"
-                }`}
+                className={`p-4 md:p-5 rounded-xl border transition-all ${cardContainerStyle}`}
               >
-                <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 bg-slate-800 text-slate-200 font-bold text-xs rounded border border-slate-700">
+                    <span className={`px-2.5 py-0.5 font-bold text-xs rounded border ${
+                      isSkipped 
+                        ? "bg-slate-900 text-slate-400 border-slate-800" 
+                        : "bg-slate-800 text-slate-200 border-slate-700"
+                    }`}>
                       Q.{idx + 1}
                     </span>
-                    <span className="text-xs text-slate-400">{item.topic}</span>
                   </div>
 
                   {/* Status Badge */}
                   <div>
                     {isCorrect ? (
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-green-600/20 text-green-400 font-bold text-xs rounded-full border border-green-500/30">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Correct (+{markingScheme.correct})
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Correct (+{stats.correctMark})
                       </span>
                     ) : isSkipped ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-slate-800 text-slate-400 font-bold text-xs rounded-full border border-slate-700">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-slate-800/80 text-slate-400 font-medium text-xs rounded-full border border-slate-700/60">
                         <HelpCircle className="w-3.5 h-3.5" /> Unattempted (0)
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-red-600/20 text-red-400 font-bold text-xs rounded-full border border-red-500/30">
-                        <XCircle className="w-3.5 h-3.5" /> Incorrect (-{markingScheme.incorrect})
+                        <XCircle className="w-3.5 h-3.5" /> Incorrect (-{stats.incorrectMark})
                       </span>
                     )}
                   </div>
@@ -259,19 +261,26 @@ export function ResultsSection({
 
                 {/* Question Statement */}
                 <div
-                  className="text-sm md:text-base text-slate-100 font-medium mb-3 leading-relaxed"
+                  className={`text-sm md:text-base font-medium mb-3 leading-relaxed ${isSkipped ? "text-slate-300" : "text-slate-100"}`}
                   dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.question) }}
                 />
 
                 {/* Options List */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs md:text-sm">
-                  {item.options.map((opt, oIdx) => {
+                  {(item.options || []).map((opt, oIdx) => {
                     const label = String.fromCharCode(65 + oIdx);
-                    const isUserChoice = item.userAnswer === opt;
-                    const isRightAnswer = item.correctAnswer === opt;
+                    const isUserChoice = String(item.userAnswer || "").trim() === String(opt || "").trim();
+                    const isRightAnswer = String(item.correctAnswer || "").trim() === String(opt || "").trim();
 
-                    let optBg = "bg-slate-900 border-slate-800 text-slate-400";
-                    if (isRightAnswer) {
+                    let optBg = "bg-slate-900/60 border-slate-800 text-slate-400";
+                    if (isSkipped) {
+                      // Unsaturated neutral look for unattempted questions
+                      if (isRightAnswer) {
+                        optBg = "bg-slate-800/60 border-slate-600 text-slate-300 font-medium";
+                      } else {
+                        optBg = "bg-slate-950/40 border-slate-800/50 text-slate-500";
+                      }
+                    } else if (isRightAnswer) {
                       optBg = "bg-green-950/60 border-green-500/60 text-green-200 font-semibold";
                     } else if (isUserChoice && !isRightAnswer) {
                       optBg = "bg-red-950/60 border-red-500/60 text-red-200 font-semibold";
@@ -288,8 +297,8 @@ export function ResultsSection({
                           dangerouslySetInnerHTML={{ __html: sanitizeHTML(opt) }}
                         />
                         {isRightAnswer && (
-                          <span className="text-[10px] uppercase font-bold text-green-400 shrink-0">
-                            ✓ Correct
+                          <span className={`text-[10px] uppercase font-bold shrink-0 ${isSkipped ? "text-slate-400" : "text-green-400"}`}>
+                            ✓ Correct Answer
                           </span>
                         )}
                         {isUserChoice && !isRightAnswer && (
@@ -307,7 +316,7 @@ export function ResultsSection({
         </div>
       </div>
 
-      {/* Action: Start New Exam */}
+      {/* 4. Bottom Action */}
       <div className="flex justify-center pt-4 pb-8">
         <Button
           onClick={onRestart}

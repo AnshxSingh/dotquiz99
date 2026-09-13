@@ -20,17 +20,17 @@ export function CbtQuestionPaperModal({
 }: CbtQuestionPaperModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col bg-slate-900 border-slate-700 text-slate-100 p-0 overflow-hidden">
-        <DialogHeader className="p-4 border-b border-slate-800 bg-slate-950 flex flex-row items-center justify-between">
+      <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[85vh] flex flex-col bg-slate-900 border-slate-700 text-slate-100 p-0 overflow-hidden">
+        <DialogHeader className="p-3 sm:p-4 border-b border-slate-800 bg-slate-950 flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-blue-400" />
-            <DialogTitle className="text-lg font-bold text-slate-100">
-              Question Paper — {data.title || "Examination"} ({data.data.length} Questions)
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 shrink-0" />
+            <DialogTitle className="text-sm sm:text-base md:text-lg font-bold text-slate-100 truncate">
+              Question Paper — {data.title || "Examination"} ({data.data.length} Qs)
             </DialogTitle>
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 divide-y divide-slate-800">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-4 sm:space-y-6 divide-y divide-slate-800">
           {data.data.map((q, idx) => (
             <div key={idx} className={idx > 0 ? "pt-6" : ""}>
               <div className="flex items-start justify-between gap-4 mb-3">
